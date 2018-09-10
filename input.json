@@ -1,0 +1,35 @@
+{
+    "posLoc": [
+      {
+        "pos": "UK",
+        "loc": "en"
+      },
+      {
+        "pos": "US",
+        "loc": "en"
+      }
+    ],
+    "age": [
+      "12",
+      "20"
+    ],
+    "lang": [
+      "francais",
+      "english",
+      "italiano"
+    ],
+    "books": [
+      "Harry Potter",
+      "Nobody's wife"
+    ],
+    "loginout": [
+      {
+        "logIn": "2018-10-17",
+        "logOut": "2018-10-18"
+      },
+      {
+        "logIn": "2018-11-17",
+        "logOut": "2018-11-18"
+      }
+    ]
+}
