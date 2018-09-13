@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.commons.collections4.MultiMap;
+import org.apache.commons.collections4.map.MultiValueMap;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +13,12 @@ import java.util.*;
 
 public class ParseJsonInput
 {
+    private MultiMap<String,String> tempMap;
+
+    ParseJsonInput() {
+        tempMap = new MultiValueMap<>();
+    }
+
     public void parseJson() {
         JsonFactory factory = new JsonFactory();
         ObjectMapper mapper = new ObjectMapper(factory);
@@ -18,22 +26,9 @@ public class ParseJsonInput
         try {
             JsonNode rootNode = mapper.readTree(jsonFile);
             System.out.println("root node: " + rootNode);
-            //anotherProcess(rootNode);
             process("",rootNode);
-            /*Iterator<Map.Entry<String,JsonNode>> fieldsIterator = rootNode.fields();
-            while (fieldsIterator.hasNext()) {
-                Map.Entry<String,JsonNode> field = fieldsIterator.next();
-                System.out.println("Key: " + field.getKey() + "\tValue:" + field.getValue());
-                System.out.println ("Node type: " + field.getValue().getNodeType().name());
-                for (int i = 0; i < field.getValue().size(); i++) {
-                    System.out.println("i: " + i + " Value: " + field.getValue().get(i).asText());
-                    System.out.println("field.getValue().get(i).isObject()? " + field.getValue().get(i).isObject());
-                    field.getValue().get(i);
-                }
-                System.out.println("Is text?: " + field.getValue().elements().next().isTextual());
-                System.out.println("Node type " + field.getValue().elements().next().getNodeType().name());
+            tempMap.forEach((k,v) -> System.out.println(k + ":" + v));
 
-            }*/
         }catch(Exception e) {
             System.err.println("Not possible to read from Json Object");
         }
@@ -67,26 +62,45 @@ public class ParseJsonInput
     }
 
 
-    private static void process(String prefix, JsonNode currentNode) {
-        if (currentNode.isArray()) {
-            System.out.println(prefix + " Is an array");
-            ArrayNode arrayNode = (ArrayNode) currentNode;
+    private void nonRecursive(JsonNode root) {
+        for (JsonNode node:root) {
+            while (node.iterator().hasNext()) {
+                if(node.isArray()) {
+                    node.iterator().next();
+                    if ("OBJECT".equals(node.iterator().next().getNodeType().toString())) {
+                        node.iterator().next().fields().forEachRemaining(entry -> System.out.println("key " + entry.getKey() + " value " + entry.getValue()));
+                    }
+                    //System.out.println("prova valori: " + node.fieldNames().next());
+                }
+                else if(node.isObject()) {
+                    System.out.println("key: " + node.fields().next().getKey() + " value: " + node.fields().next().getValue());
+                }
+                else {
+                    System.out.println("key: " + node.fields().next().getKey() + " value: " + node.fields().next().getValue());
+                }
+            }
+        }
+    }
+
+
+    private void process(String prefix, JsonNode nextNode) {
+        if (nextNode.isArray()) {
+            ArrayNode arrayNode = (ArrayNode) nextNode;
             Iterator<JsonNode> node = arrayNode.elements();
             int index = 1;
-            currentNode
             while (node.hasNext()) {
-                process(!prefix.isEmpty() ? prefix + "-" + index : String.valueOf(index), node.next());
+                //process(!prefix.isEmpty() ? prefix + "-" + index : String.valueOf(index), node.next());
+                process(prefix, node.next());
                 index += 1;
             }
         }
-        else if (currentNode.isObject()) {
-            System.out.println(prefix + " Is an object");
-            currentNode.fields().forEachRemaining(entry -> process(!prefix.isEmpty() ? prefix + "-" + entry.getKey() : entry.getKey(), entry.getValue()));
+        else if (nextNode.isObject()) {
+            //nextNode.fields().forEachRemaining(entry -> process(!prefix.isEmpty() ? prefix + "-" + entry.getKey() : entry.getKey(), entry.getValue()));
+            nextNode.fields().forEachRemaining(entry -> process(entry.getKey(), entry.getValue()));
         }
-        else if (currentNode.isTextual()) {
-            List<JsonNode> parents = new ArrayList<JsonNode>();
-            System.out.println("Parent: " + currentNode.findParents(currentNode.toString()));
-            System.out.println("String " + prefix + ": " + currentNode.toString());
+        else if (nextNode.isTextual()) {
+            System.out.println(prefix + ": " + nextNode.toString());
+            tempMap.put(prefix, nextNode.toString());
         }
     }
 }
